@@ -63,7 +63,7 @@ def dick_random() -> int:
     if luck == 1:
         return -20
 
-    return random.randint(-8, 10)
+    return random.randint(-7, 10)
 
 
 def reply_text_for_change(change: int) -> str:
@@ -128,7 +128,7 @@ async def dick_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
     if username is None:
         reply_text = "Стартани бота, довірся йому"
     else:
-        reply_text = await to_thread(update_dick, username)
+        reply_text = update_dick(username)
 
     user = update.effective_user
     await update.message.reply_html(
@@ -143,7 +143,21 @@ async def help_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
         reply_to_message_id=update.message.id,
     )
 
-    await to_thread(check_dick, update.message.chat.username)
+
+async def top_command(update: Update, _: ContextTypes.DEFAULT_TYPE) -> None:
+    res = conn.execute(
+        f'select id, username, last_update_date, dick_length from dicks order by dick_length DESC',
+
+    )
+
+    reply_text = "Список членів:\n"
+    for dick in res.fetchall():
+        reply_text += f"{dick[1]} 🍆 {dick[3]} см\n"
+
+    await update.message.reply_text(
+        reply_text,
+        reply_to_message_id=update.message.id,
+    )
 
 
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -179,6 +193,7 @@ def main() -> None:
 
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("dick", dick_command))
+    application.add_handler(CommandHandler("top", top_command))
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
